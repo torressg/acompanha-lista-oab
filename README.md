@@ -10,7 +10,7 @@ Monitor automático da página do 45º Exame OAB (Seccional SP) que detecta quan
 ┌─────────────┐     ┌──────────────┐     ┌─────────────┐     ┌──────────┐
 │  GitHub      │────▶│  Scraper     │────▶│  Detector   │────▶│ Telegram │
 │  Actions     │     │  (cheerio)   │     │  (snapshot)  │     │ Bot API  │
-│  cron 2min   │     │  fetch HTML  │     │  novos itens │     │ mensagem │
+│  cron 5min   │     │  fetch HTML  │     │  novos itens │     │ mensagem │
 └─────────────┘     └──────────────┘     └─────────────┘     └──────────┘
 ```
 
@@ -43,7 +43,7 @@ No repositório, vá em **Settings → Secrets and variables → Actions** e adi
 
 ### 4. Ativar GitHub Actions
 
-O workflow roda automaticamente a cada 2 minutos. Para executar manualmente:
+O workflow roda automaticamente a cada 5 minutos. Para executar manualmente:
 
 **Actions → Monitor OAB → Run workflow**
 
@@ -70,8 +70,8 @@ Edite o cron em `.github/workflows/monitor.yml`:
 
 ```yaml
 schedule:
-  - cron: "*/2 * * * *"  # A cada 2 minutos
-  # - cron: "*/5 * * * *"  # A cada 5 minutos
+  - cron: "*/5 * * * *"  # A cada 5 minutos
+  # - cron: "*/15 * * * *" # A cada 15 minutos
   # - cron: "0 * * * *"    # A cada hora
 ```
 

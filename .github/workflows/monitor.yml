@@ -2,7 +2,7 @@ name: Monitor OAB
 
 on:
   schedule:
-    - cron: "*/2 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -24,6 +24,8 @@ jobs:
         with:
           path: data/snapshot.json
           key: oab-snapshot
+          restore-keys: |
+            oab-snapshot
 
       - name: Build
         run: npm run build
@@ -34,8 +36,15 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: npm start
 
+      - name: Delete old cache
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh cache delete oab-snapshot --repo ${{ github.repository }} || true
+
       - name: Save snapshot
         uses: actions/cache/save@v4
         with:
           path: data/snapshot.json
-          key: oab-snapshot-${{ github.run_id }}
+          key: oab-snapshot
