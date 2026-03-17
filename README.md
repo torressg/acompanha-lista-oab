@@ -1,21 +1,20 @@
 # Acompanha Lista OAB
 
-[![Monitor OAB](https://github.com/torressg/acompanha-lista-oab/actions/workflows/monitor.yml/badge.svg)](https://github.com/torressg/acompanha-lista-oab/actions/workflows/monitor.yml)
-
 Monitor automático da página do 45º Exame OAB (Seccional SP) que detecta quando um novo **Resultado Preliminar** é publicado e envia notificação via **Telegram**.
+
+Roda como **Cloudflare Worker** com Cron Trigger a cada 5 minutos.
 
 ## Como funciona
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌─────────────┐     ┌──────────┐
-│  GitHub      │────▶│  Scraper     │────▶│  Detector   │────▶│ Telegram │
-│  Actions     │     │  (cheerio)   │     │  (snapshot)  │     │ Bot API  │
-│  cron 5min   │     │  fetch HTML  │     │  novos itens │     │ mensagem │
+│  Cloudflare  │────▶│  Scraper     │────▶│  Detector   │────▶│ Telegram │
+│  Cron 5min   │     │  (cheerio)   │     │  (KV store)  │     │ Bot API  │
 └─────────────┘     └──────────────┘     └─────────────┘     └──────────┘
 ```
 
 1. **Scraper**: Faz fetch da página da FGV e extrai todos os itens (editais, resultados, provas)
-2. **Detector**: Compara com o snapshot anterior para identificar itens novos contendo "resultado preliminar"
+2. **Detector**: Compara com o snapshot salvo no Cloudflare KV para identificar itens novos contendo "resultado preliminar"
 3. **Notifier**: Envia mensagem via Telegram (com PDF anexo quando disponível)
 
 ## Setup
@@ -32,50 +31,43 @@ Monitor automático da página do 45º Exame OAB (Seccional SP) que detecta quan
 2. Acesse: `https://api.telegram.org/bot<SEU_TOKEN>/getUpdates`
 3. Copie o `chat.id` da resposta
 
-### 3. Configurar Secrets no GitHub
-
-No repositório, vá em **Settings → Secrets and variables → Actions** e adicione:
-
-| Secret              | Valor                    |
-| ------------------- | ------------------------ |
-| `TELEGRAM_BOT_TOKEN`| Token do BotFather       |
-| `TELEGRAM_CHAT_ID`  | Chat ID do passo anterior|
-
-### 4. Ativar GitHub Actions
-
-O workflow roda automaticamente a cada 5 minutos. Para executar manualmente:
-
-**Actions → Monitor OAB → Run workflow**
-
-## Execução local
+### 3. Deploy no Cloudflare Workers
 
 ```bash
 # Instalar dependências
 npm install
 
-# Configurar variáveis de ambiente
-cp .env.example .env
-# Edite .env com seus tokens
+# Login no Cloudflare
+npx wrangler login
 
-# Executar
-node --env-file=.env --import=tsx src/index.ts
+# Criar o KV namespace e colocar o id no wrangler.toml
+npx wrangler kv namespace create SNAPSHOT
 
-# Modo teste (envia os 2 primeiros itens da página)
-TEST_MODE=1 node --env-file=.env --import=tsx src/index.ts
+# Adicionar secrets
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+npx wrangler secret put TELEGRAM_CHAT_ID
+
+# Deploy
+npm run deploy
 ```
+
+### 4. Verificar
+
+```bash
+# Logs em tempo real
+npm run tail
+```
+
+Ou pelo dashboard: [dash.cloudflare.com](https://dash.cloudflare.com) → **Workers & Pages** → **acompanha-lista-oab**
 
 ## Configuração do intervalo
 
-Edite o cron em `.github/workflows/monitor.yml`:
+Edite o cron em `wrangler.toml`:
 
-```yaml
-schedule:
-  - cron: "*/5 * * * *"  # A cada 5 minutos
-  # - cron: "*/15 * * * *" # A cada 15 minutos
-  # - cron: "0 * * * *"    # A cada hora
+```toml
+[triggers]
+crons = ["*/5 * * * *"]  # A cada 5 minutos
 ```
-
-> **Nota**: O GitHub Actions pode ter atrasos de alguns minutos no agendamento cron.
 
 ## Licença
 

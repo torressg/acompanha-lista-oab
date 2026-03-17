@@ -1,20 +1,19 @@
 {
   "name": "acompanha-lista-oab",
-  "version": "1.0.0",
-  "description": "Monitor do resultado preliminar do Exame OAB",
+  "version": "2.0.0",
+  "description": "Monitor do resultado preliminar do Exame OAB (Cloudflare Worker)",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "tsx src/index.ts"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
   },
   "dependencies": {
     "cheerio": "^1.0.0"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "tsx": "^4.0.0",
-    "typescript": "^5.7.0"
+    "@cloudflare/workers-types": "^4.20241205.0",
+    "wrangler": "^4.74.0"
   },
   "license": "MIT"
 }

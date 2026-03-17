@@ -1,0 +1,10 @@
+name = "acompanha-lista-oab"
+main = "src/worker.ts"
+compatibility_date = "2024-12-01"
+
+[[kv_namespaces]]
+binding = "SNAPSHOT"
+id = "13c5de8318d84577a938a144d0259952"
+
+[triggers]
+crons = ["*/5 * * * *"]

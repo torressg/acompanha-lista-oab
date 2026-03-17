@@ -10,7 +10,7 @@ const DEFAULT_URL =
   "https://oab.fgv.br/NovoSec.aspx?key=5cmxTPp7FC0=&codSec=5149";
 
 export async function scrape(url?: string): Promise<OabItem[]> {
-  const targetUrl = url ?? process.env.OAB_URL ?? DEFAULT_URL;
+  const targetUrl = url ?? DEFAULT_URL;
 
   const response = await fetch(targetUrl, {
     headers: {
@@ -28,7 +28,6 @@ export async function scrape(url?: string): Promise<OabItem[]> {
 
   const items: OabItem[] = [];
 
-  // Each row in the GridView table has a span with the date and an anchor with title+url
   $("tr").each((_, row) => {
     const dateSpan = $(row).find(
       'span[id*="ContentPlaceHolder1_gvArquivos_lbData"]'

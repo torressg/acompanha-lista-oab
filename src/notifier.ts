@@ -2,15 +2,9 @@ import type { OabItem } from "./scraper.js";
 
 const TELEGRAM_API = "https://api.telegram.org/bot";
 
-function getConfig() {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) {
-    throw new Error(
-      "Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID environment variables"
-    );
-  }
-  return { token, chatId };
+interface TelegramEnv {
+  TELEGRAM_BOT_TOKEN: string;
+  TELEGRAM_CHAT_ID: string;
 }
 
 async function sendMessage(
@@ -41,13 +35,12 @@ async function sendDocument(
   pdfUrl: string,
   caption: string
 ): Promise<void> {
-  // Download PDF
   const pdfRes = await fetch(pdfUrl);
   if (!pdfRes.ok) {
     console.warn(`Failed to download PDF: ${pdfUrl} (${pdfRes.status})`);
     return;
   }
-  const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
+  const pdfBuffer = await pdfRes.arrayBuffer();
   const filename =
     decodeURIComponent(pdfUrl.split("/").pop() ?? "documento.pdf");
 
@@ -68,8 +61,11 @@ async function sendDocument(
   }
 }
 
-export async function notify(items: OabItem[]): Promise<void> {
-  const { token, chatId } = getConfig();
+export async function notify(
+  items: OabItem[],
+  env: TelegramEnv
+): Promise<void> {
+  const { TELEGRAM_BOT_TOKEN: token, TELEGRAM_CHAT_ID: chatId } = env;
 
   for (const item of items) {
     const text = [
@@ -86,6 +82,6 @@ export async function notify(items: OabItem[]): Promise<void> {
       await sendMessage(token, chatId, text);
     }
 
-    console.log(`  ✔ Notificação enviada: ${item.titulo}`);
+    console.log(`  Notificação enviada: ${item.titulo}`);
   }
 }
