@@ -1,74 +1,65 @@
 # Acompanha Lista OAB
 
-Monitor automático da página do 45º Exame OAB (Seccional SP) que detecta quando um novo **Resultado Preliminar** é publicado e envia notificação via **Telegram**.
+Watches the 45th OAB Exam page (São Paulo section) and sends a **Telegram** message as soon as a new **preliminary result** is published, with the PDF attached when there is one.
 
-Roda como **Cloudflare Worker** com Cron Trigger a cada 5 minutos.
+Runs as a **Cloudflare Worker** on a cron trigger every 5 minutes. No server to maintain.
 
-## Como funciona
+## How it works
 
 ```
-┌─────────────┐     ┌──────────────┐     ┌─────────────┐     ┌──────────┐
-│  Cloudflare  │────▶│  Scraper     │────▶│  Detector   │────▶│ Telegram │
-│  Cron 5min   │     │  (cheerio)   │     │  (KV store)  │     │ Bot API  │
-└─────────────┘     └──────────────┘     └─────────────┘     └──────────┘
+┌──────────────┐    ┌─────────────┐    ┌──────────────┐    ┌──────────┐
+│  Cloudflare  │───▶│   Scraper   │───▶│   Detector   │───▶│ Telegram │
+│  Cron 5 min  │    │  (cheerio)  │    │  (KV store)  │    │ Bot API  │
+└──────────────┘    └─────────────┘    └──────────────┘    └──────────┘
 ```
 
-1. **Scraper**: Faz fetch da página da FGV e extrai todos os itens (editais, resultados, provas)
-2. **Detector**: Compara com o snapshot salvo no Cloudflare KV para identificar itens novos contendo "resultado preliminar"
-3. **Notifier**: Envia mensagem via Telegram (com PDF anexo quando disponível)
+1. **Scraper** fetches the FGV page and extracts every item (notices, results, exams)
+2. **Detector** compares it with the last snapshot in Cloudflare KV and picks new items that mention "resultado preliminar"
+3. **Notifier** sends the Telegram message
+
+## Stack
+
+TypeScript · Cloudflare Workers · Cloudflare KV · Cheerio · Telegram Bot API
 
 ## Setup
 
-### 1. Criar Bot no Telegram
+### 1. Create a Telegram bot
 
-1. Abra o Telegram e converse com [@BotFather](https://t.me/BotFather)
-2. Envie `/newbot` e siga as instruções
-3. Copie o **token** do bot
+Talk to [@BotFather](https://t.me/BotFather), send `/newbot` and copy the bot **token**.
 
-### 2. Obter Chat ID
+### 2. Get your chat ID
 
-1. Envie qualquer mensagem para o seu bot
-2. Acesse: `https://api.telegram.org/bot<SEU_TOKEN>/getUpdates`
-3. Copie o `chat.id` da resposta
+Send any message to your bot, open `https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates` and copy `chat.id`.
 
-### 3. Deploy no Cloudflare Workers
+### 3. Deploy
 
 ```bash
-# Instalar dependências
 npm install
-
-# Login no Cloudflare
 npx wrangler login
 
-# Criar o KV namespace e colocar o id no wrangler.toml
+# Create the KV namespace and put its id in wrangler.toml
 npx wrangler kv namespace create SNAPSHOT
 
-# Adicionar secrets
+# Secrets
 npx wrangler secret put TELEGRAM_BOT_TOKEN
 npx wrangler secret put TELEGRAM_CHAT_ID
 
-# Deploy
 npm run deploy
 ```
 
-### 4. Verificar
+### 4. Check the logs
 
 ```bash
-# Logs em tempo real
 npm run tail
 ```
 
-Ou pelo dashboard: [dash.cloudflare.com](https://dash.cloudflare.com) → **Workers & Pages** → **acompanha-lista-oab**
-
-## Configuração do intervalo
-
-Edite o cron em `wrangler.toml`:
+To change the interval, edit the cron in `wrangler.toml`:
 
 ```toml
 [triggers]
-crons = ["*/5 * * * *"]  # A cada 5 minutos
+crons = ["*/5 * * * *"]
 ```
 
-## Licença
+## License
 
 MIT
